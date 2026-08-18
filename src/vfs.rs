@@ -10,6 +10,8 @@ use crate::nfs::*;
 pub struct DirEntrySimple {
     pub fileid: fileid3,
     pub name: filename3,
+    /// Pagination cookie; see [`DirEntry::cookie`].
+    pub cookie: u64,
 }
 #[derive(Default, Debug)]
 pub struct ReadDirSimpleResult {
@@ -22,6 +24,21 @@ pub struct DirEntry {
     pub fileid: fileid3,
     pub name: filename3,
     pub attr: fattr3,
+    /// Pagination cookie for this entry, echoed back by the client in the next
+    /// `readdir` as `start_after`.
+    ///
+    /// This used to be the `fileid`, which cannot work in general: a fileid is not
+    /// unique within a directory. Hard links share one, and so do `.` and `..` in a
+    /// file system's root. When the server truncates a reply to its byte budget the
+    /// client resumes from the last entry it actually received, so an ambiguous
+    /// cookie either rewinds the listing or skips the entries in between — silently,
+    /// with eof set. RFC 1813 §3.3.16 makes the cookie server-opaque precisely so an
+    /// implementation can use a position instead of an identity.
+    ///
+    /// Set it to anything that uniquely identifies the entry's position in the
+    /// listing; an index is the obvious choice. Zero is reserved: the client sends
+    /// cookie 0 to mean "start at the beginning".
+    pub cookie: u64,
 }
 #[derive(Default, Debug)]
 pub struct ReadDirResult {
@@ -37,6 +54,7 @@ impl ReadDirSimpleResult {
             .map(|e| DirEntrySimple {
                 fileid: e.fileid,
                 name: e.name.clone(),
+                cookie: e.cookie,
             })
             .collect();
         ReadDirSimpleResult {

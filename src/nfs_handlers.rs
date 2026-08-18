@@ -904,7 +904,7 @@ pub async fn nfsproc3_readdirplus(
                 let entry = entryplus3 {
                     fileid: entry.fileid,
                     name: entry.name,
-                    cookie: entry.fileid,
+                    cookie: entry.cookie,
                     name_attributes: nfs::post_op_attr::attributes(obj_attr),
                     name_handle: handle,
                 };
@@ -1025,7 +1025,7 @@ pub async fn nfsproc3_readdir(
                 let entry = entry3 {
                     fileid: entry.fileid,
                     name: entry.name,
-                    cookie: entry.fileid,
+                    cookie: entry.cookie,
                 };
                 // write the entry into a buffer first
                 let mut write_buf: Vec<u8> = Vec::new();
