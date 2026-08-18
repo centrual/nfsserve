@@ -82,14 +82,17 @@ pub struct FsStat {
     pub free_files: u64,
     /// Number of free file slots available to the user the request is made on behalf of.
     pub available_files: u64,
-    /// Number of seconds for which the server guarantees these values will not change. `u32::MAX`
-    /// means no such guarantee is made.
+    /// Number of seconds for which the file system is not expected to change, per RFC 1813
+    /// §3.3.18: zero for a volatile file system, and "for an immutable file system, such as a
+    /// CD-ROM, this would be the largest unsigned integer" — so `u32::MAX` advertises that the
+    /// file system does not change, which is what a read-only export wants.
     pub invar_sec: u32,
 }
 
 impl Default for FsStat {
     /// The placeholder values the server reported before [`NFSFileSystem::fsstat`] existed: 1 TiB
-    /// of space and 1 Gi file slots, all of it free.
+    /// of space and 1 Gi file slots, all of it free, and an `invar_sec` claiming the file system
+    /// never changes.
     fn default() -> Self {
         const TIB: u64 = 1024 * 1024 * 1024 * 1024;
         const GI: u64 = 1024 * 1024 * 1024;
